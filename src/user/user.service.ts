@@ -1,31 +1,39 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Alias } from 'typeorm/query-builder/Alias';
+import { User } from './user.entity';
 
-// This should be a real class/interface representing a user entity
-export type User = any;
 
 @Injectable()
 export class UserService {
-  private readonly users = [
-    {
-      userId: 1,
-      username: 'john',
-      email: 'john@ogier.io',
-      password: 'changeme',
-    },
-    {
-      userId: 2,
-      username: 'maria',
-      email: 'maria@ogier.io',
-      password: 'guess',
-    },
-  ];
 
-  async findOne(alias: string): Promise<User | undefined> {
-    if (this.users.find(user => user.username === alias)){
-        return this.users.find(user => user.username === alias);
-    } else if (this.users.find(user => user.email === alias)){
-        return this.users.find(user => user.email === alias);
+  constructor(
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
+  ) {}
+
+  findAll(): Promise<User[]> {
+    return this.usersRepository.find();
+  }
+
+  async findOne(alias: string): Promise<User> {
+    const usernameUser = await this.usersRepository.findOne({where: {username: alias}});
+    const emailuser = await this.usersRepository.findOne({where: {email: alias}})
+    if (usernameUser){
+      return usernameUser;
+    } else if (emailuser){
+      return emailuser;
     }
     return null;
   }
+
+  createOne(userDto: any) {
+    return this.usersRepository.save(userDto);
+  }
+
+  async remove(id: string): Promise<void> {
+    await this.usersRepository.delete(id);
+  }
+
 }
